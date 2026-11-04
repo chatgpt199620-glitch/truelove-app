@@ -17,8 +17,7 @@ jobs:
             echo "PROBLEM: secret is EMPTY or not found"
             exit 1
           fi
-          echo "Secret length: ${#FIREBASE_SERVICE_ACCOUNT}"
-          echo "First character: ${FIREBASE_SERVICE_ACCOUNT:0:1}"
+          echo "Secret found"
 
       - name: Install dependencies
         run: pip install google-auth requests
@@ -26,7 +25,7 @@ jobs:
       - name: Send push notification
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          RELEASE_URL: ${{ github.event.release.html_url || format('https://github.com/{0}/releases/latest', github.repository) }}
+          RELEASE_URL: ${{ format('https://github.com/{0}/releases/latest/download/app-release.apk', github.repository) }}
         run: |
           python - <<'EOF'
           import os, json, requests
@@ -46,7 +45,7 @@ jobs:
               "topic": "app_updates",
               "notification": {
                 "title": "New version of TrueLove available",
-                "body": "Tap to update now."
+                "body": "Tap to download and install the update."
               },
               "data": {"download_url": os.environ["RELEASE_URL"]}
             }
