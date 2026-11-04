@@ -3,40 +3,37 @@ import 'package:url_launcher/url_launcher.dart';
 
 class UpdateNotifier {
   static Future<void> init() async {
-    final messaging = FirebaseMessaging.instance;
+    try {
+      final messaging = FirebaseMessaging.instance;
 
-    // Ask the user's permission to show notifications (required on Android 13+)
-    await messaging.requestPermission();
+      // Ask the user's permission to show notifications (required on Android 13+)
+      await messaging.requestPermission();
 
-    // This subscribes EVERY device that has this app to a shared "mailbox"
-    // named "app_updates" — this is how one message reaches everyone at once.
-    await messaging.subscribeToTopic('app_updates');
+      // Subscribes this device to the shared "app_updates" mailbox
+      await messaging.subscribeToTopic('app_updates');
 
-    // What happens when a notification arrives while the app is OPEN
-    FirebaseMessaging.onMessage.listen((message) {
-      // For now, we just print it — later we can show an in-app popup too.
-      print('Update notification received: ${message.notification?.title}');
-    });
+      // Notification arrives while the app is OPEN
+      FirebaseMessaging.onMessage.listen((message) {
+        print('Update notification received: ${message.notification?.title}');
+      });
 
-    // What happens when the user TAPS a notification (app was closed/background)
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      _openDownloadLink(message);
-    });
+      // User taps the notification (app in background)
+      FirebaseMessaging.onMessageOpenedApp.listen(_openDownloadLink);
 
-    // Handles the case where the app was completely closed and opened BY tapping the notification
-    final initialMessage = await messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _openDownloadLink(initialMessage);
+      // App was fully closed and opened BY tapping the notification
+      final initialMessage = await messaging.getInitialMessage();
+      if (initialMessage != null) {
+        await _openDownloadLink(initialMessage);
+      }
+    } catch (e) {
+      print('UpdateNotifier error: $e');
     }
   }
 
-  static void _openDownloadLink(RemoteMessage message) async {
-    final link = message.data['downloadUrl'];
+  static Future<void> _openDownloadLink(RemoteMessage message) async {
+    final link = message.data['download_url'] ?? message.data['downloadUrl'];
     if (link != null) {
-      final uri = Uri.parse(link);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+      await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
     }
   }
 }

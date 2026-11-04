@@ -1,0 +1,45 @@
+name: Notify users of new release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: pip install google-auth requests
+
+      - name: Send push notification
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+        run: |
+          python - <<'EOF'
+          import os, json, requests
+          from google.oauth2 import service_account
+          from google.auth.transport.requests import Request
+
+          info = json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"])
+          creds = service_account.Credentials.from_service_account_info(
+              info,
+              scopes=["https://www.googleapis.com/auth/firebase.messaging"],
+          )
+          creds.refresh(Request())
+
+          url = f"https://fcm.googleapis.com/v1/projects/{info['project_id']}/messages:send"
+          body = {
+            "message": {
+              "topic": "app_updates",
+              "notification": {
+                "title": "New version of TrueLove available",
+                "body": "Tap to update now."
+              },
+              "data": {"download_url": os.environ["RELEASE_URL"]}
+            }
+          }
+          r = requests.post(url, headers={"Authorization": f"Bearer {creds.token}"}, json=body)
+          print(r.status_code, r.text)
+          r.raise_for_status()
+          EOF
