@@ -47,6 +47,7 @@ dependencies:
   firebase_messaging: ^17.0.1
   url_launcher: ^6.3.3
   ota_update: ^7.1.0
+  share_plus: ^13.3.1
 
 dev_dependencies:
   flutter_test:

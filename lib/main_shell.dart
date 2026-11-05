@@ -11,6 +11,7 @@ import 'notifications_screen.dart';
 import 'presence_service.dart';
 import 'whatsapp_theme.dart';
 import 'animated_heart.dart';
+import 'invite_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -57,12 +58,14 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  // Search is no longer a tab. It opens from the search icon in the top-right.
+  // Tab order: 0 Matches, 1 Inbox, 2 Messages, 3 Settings, 4 Invite
   final screens = const [
     BrowseScreen(),
     RequestsScreen(),
     MatchesScreen(),
-    SearchScreen(),
     SettingsScreen(),
+    InviteScreen(),
   ];
 
   @override
@@ -110,6 +113,16 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                 },
               ),
               actions: [
+                // Search icon (top-right)
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  tooltip: 'Search',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SearchScreen()),
+                  ),
+                ),
+                // Notifications icon with unread badge
                 StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('users').doc(myUid).collection('notifications')
@@ -160,14 +173,14 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                 label: "Messages",
               ),
               NavigationDestination(
-                icon: const Icon(Icons.search),
-                selectedIcon: const Icon(Icons.search, color: kWaAccentColor),
-                label: "Search",
-              ),
-              NavigationDestination(
                 icon: const Icon(Icons.person_outline),
                 selectedIcon: const Icon(Icons.person, color: kWaAccentColor),
                 label: "Settings",
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.share_outlined),
+                selectedIcon: const Icon(Icons.share, color: kWaAccentColor),
+                label: "Invite",
               ),
             ],
           );
